@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Учить или не учить?</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0d0d14; color: #f0eeff; font-family: Arial, sans-serif; padding: 16px; min-height: 100vh; }
+h1 { text-align: center; font-size: 1.3rem; margin-bottom: 4px; color: #ff4d6d; }
+.subtitle { text-align: center; color: #888; font-size: 0.8rem; margin-bottom: 20px; }
+.section { background: #1a1a26; border-radius: 16px; padding: 16px; margin-bottom: 14px; border: 1px solid #ffffff12; }
+.section-title { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+.grades { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.grade-btn { background: #ffffff08; border: 1px solid #ffffff15; border-radius: 10px; color: #f0eeff; font-size: 0.8rem; padding: 10px 4px; cursor: pointer; text-align: center; }
+.grade-btn.active { background: #ff4d6d; border-color: #ff4d6d; color: white; font-weight: bold; }
+.adult-btn { grid-column: span 2; background: #f7c94812; border-color: #f7c94830; color: #f7c948; }
+.adult-btn.active { background: #f7c948; color: #000; border-color: #f7c948; }
+.textarea-wrap { position: relative; }
+textarea#textInput { width: 100%; background: #ffffff08; border: 1px solid #ffffff15; border-radius: 12px; color: #f0eeff; font-size: 0.9rem; line-height: 1.6; padding: 12px 50px 40px 12px; resize: none; height: 150px; outline: none; }
+.ta-btn-expand { position: absolute; top: 8px; right: 8px; width: 34px; height: 34px; border-radius: 8px; border: none; background: #4ecca322; color: #4ecca3; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.ta-btn-clear { position: absolute; bottom: 8px; right: 8px; width: 34px; height: 34px; border-radius: 8px; border: none; background: #ff4d6d22; color: #ff4d6d; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.photo-row { display: flex; gap: 8px; margin-top: 10px; }
+.photo-btn { flex: 1; background: #4ecca312; border: 1px solid #4ecca330; border-radius: 10px; color: #4ecca3; font-size: 0.82rem; padding: 10px; cursor: pointer; }
+#fileInput { display: none; }
+#previewImg { display: none; width: 100%; border-radius: 10px; margin-top: 10px; max-height: 180px; object-fit: cover; }
+#ocrMsg { font-size: 0.78rem; margin-top: 8px; min-height: 18px; text-align: center; color: #888; }
+#analyzeBtn { width: 100%; background: #ff4d6d; border: none; border-radius: 14px; color: white; font-size: 1rem; font-weight: bold; padding: 16px; cursor: pointer; margin-bottom: 14px; }
+#analyzeBtn:disabled { background: #444; color: #666; cursor: not-allowed; }
+#loading { display: none; text-align: center; padding: 30px; color: #888; }
+.spinner { width: 36px; height: 36px; border: 3px solid #333; border-top-color: #ff4d6d; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#errorMsg { background: #ff4d6d18; border: 1px solid #ff4d6d40; border-radius: 12px; padding: 12px; margin-bottom: 14px; font-size: 0.82rem; color: #ff8fa3; display: none; text-align: center; }
+#results { display: none; }
+.verdict-box { border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 14px; }
+.verdict-box.easy { background: #4ecca318; border: 1px solid #4ecca340; }
+.verdict-box.medium { background: #f7c94818; border: 1px solid #f7c94840; }
+.verdict-box.hard { background: #ff4d6d18; border: 1px solid #ff4d6d40; }
+.verdict-emoji { font-size: 3rem; display: block; margin-bottom: 8px; }
+.verdict-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 6px; }
+.easy .verdict-title { color: #4ecca3; }
+.medium .verdict-title { color: #f7c948; }
+.hard .verdict-title { color: #ff4d6d; }
+.verdict-sub { font-size: 0.8rem; color: #888; }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.stat { background: #1a1a26; border: 1px solid #ffffff12; border-radius: 14px; padding: 14px; }
+.stat-icon { font-size: 1.4rem; }
+.stat-num { font-size: 1.4rem; font-weight: bold; margin: 4px 0; }
+.stat-lbl { font-size: 0.72rem; color: #888; }
+.bar-section { background: #1a1a26; border: 1px solid #ffffff12; border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+.bar-row { margin-bottom: 14px; }
+.bar-row:last-child { margin-bottom: 0; }
+.bar-top { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px; }
+.bar-bg { height: 8px; background: #ffffff08; border-radius: 99px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 99px; transition: width 1s ease; width: 0; }
+.red { background: linear-gradient(90deg, #ff4d6d, #ff8fa3); }
+.yellow { background: linear-gradient(90deg, #f7c948, #ffe066); }
+.green { background: linear-gradient(90deg, #4ecca3, #a8f5e5); }
+.comment-box { background: #1a1a26; border: 1px solid #ffffff12; border-left: 3px solid #ff4d6d; border-radius: 16px; padding: 16px; margin-bottom: 14px; font-size: 0.88rem; line-height: 1.6; }
+.comment-label { font-size: 0.72rem; color: #888; margin-bottom: 8px; }
+.tips-box { background: #1a1a26; border: 1px solid #ffffff12; border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+.stitle { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+.tip { padding: 8px 0 8px 20px; border-bottom: 1px solid #ffffff08; font-size: 0.84rem; line-height: 1.5; position: relative; }
+.tip:last-child { border: none; }
+.tip::before { content: '→'; position: absolute; left: 0; color: #f7c948; }
+.source-box { background: #1a1a26; border: 1px solid #ffffff12; border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+.source-row { display: flex; gap: 8px; align-items: flex-start; padding: 5px 0; border-bottom: 1px solid #ffffff08; }
+.source-row:last-child { border: none; }
+.source-key { color: #888; min-width: 80px; font-size: 0.78rem; padding-top: 2px; }
+.source-val { color: #f0eeff; font-size: 0.84rem; }
+.google-btn { display: block; width: 100%; margin-top: 12px; background: #4ea8de18; border: 1px solid #4ea8de40; border-radius: 12px; color: #4ea8de; font-size: 0.84rem; padding: 11px 14px; cursor: pointer; text-align: center; text-decoration: none; }
+#resetBtn { width: 100%; background: transparent; border: 1px solid #ffffff15; border-radius: 12px; color: #888; font-size: 0.85rem; padding: 12px; cursor: pointer; margin-bottom: 30px; }
+.modal { display: none; position: fixed; inset: 0; z-index: 999; background: #0d0d14; flex-direction: column; }
+.modal.open { display: flex; }
+.modal-top { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #ffffff12; flex-shrink: 0; }
+.modal-top span { font-size: 0.9rem; color: #888; }
+.modal-top-btns { display: flex; gap: 8px; }
+.mbtn { border: none; border-radius: 10px; font-size: 0.85rem; padding: 8px 16px; cursor: pointer; }
+.mbtn-save { background: #4ecca322; color: #4ecca3; }
+.mbtn-close { background: #ff4d6d22; color: #ff4d6d; }
+#modalTextarea { flex: 1; background: #ffffff08; border: none; color: #f0eeff; font-size: 1rem; line-height: 1.7; padding: 16px; resize: none; outline: none; width: 100%; }
+</style>
+</head>
+<body>
+
+<h1>📚 Учить или не учить?</h1>
+<p class="subtitle">Анализ сложности текста</p>
+
+<div class="section">
+  <div class="section-title">Шаг 1 — Твой класс</div>
+  <div class="grades">
+    <button class="grade-btn" onclick="selectGrade(this,'1')">1 кл.</button>
+    <button class="grade-btn" onclick="selectGrade(this,'2')">2 кл.</button>
+    <button class="grade-btn" onclick="selectGrade(this,'3')">3 кл.</button>
+    <button class="grade-btn" onclick="selectGrade(this,'4')">4 кл.</button>
+    <button class="grade-btn" onclick="selectGrade(this,'5')">5 кл.</button>
+    <button class="grade-btn" onclick="selectGrade(this,'6')">6 кл.</button>
+    <button class="grade-btn" onclick="selectGrade(this,'7')">7 кл.</button>
+    <button class="grade-btn" onclick="selectGrade(this,'8')">8 кл.</button>
+    <button class="grade-btn" onclick="selectGrade(this,'9')">9 кл.</button>
+    <button class="grade-btn" onclick="selectGrade(this,'10')">10 кл.</button>
+    <button class="grade-btn" onclick="selectGrade(this,'11')">11 кл.</button>
+    <button class="grade-btn adult-btn" onclick="selectGrade(this,'18')">🎓 Старше 18</button>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Шаг 2 — Текст</div>
+  <div class="textarea-wrap">
+    <textarea id="textInput" placeholder="Вставь стихотворение или рассказ..." oninput="checkReady()"></textarea>
+    <button class="ta-btn-expand" onclick="openModal()">⛶</button>
+    <button class="ta-btn-clear" onclick="clearText()">✕</button>
+  </div>
+  <div class="photo-row">
+    <button class="photo-btn" onclick="openCamera()">📷 Камера</button>
+    <button class="photo-btn" onclick="openGallery()">🖼️ Галерея</button>
+  </div>
+  <input type="file" id="fileInput" accept="image/*" onchange="handlePhoto(this)">
+  <img id="previewImg" src="" alt="">
+  <div id="ocrMsg"></div>
+</div>
+
+<div id="errorMsg"></div>
+<button id="analyzeBtn" onclick="analyze()" disabled>✨ Проанализировать</button>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div id="loadingText">Анализирую...</div>
+</div>
+
+<div id="results"></div>
+
+<div class="modal" id="modal">
+  <div class="modal-top">
+    <span>✏️ Редактировать текст</span>
+    <div class="modal-top-btns">
+      <button class="mbtn mbtn-save" onclick="saveModal()">✓ Сохранить</button>
+      <button class="mbtn mbtn-close" onclick="closeModal()">✕</button>
+    </div>
+  </div>
+  <textarea id="modalTextarea"></textarea>
+</div>
+
+<script>
+var grade = null;
+var OCR_KEY = 'K85821886988957';
+
+function selectGrade(btn, val) {
+  document.querySelectorAll('.grade-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  grade = val;
+  checkReady();
+}
+function checkReady() {
+  var txt = document.getElementById('textInput').value.trim();
+  document.getElementById('analyzeBtn').disabled = !(grade && txt.length > 10);
+}
+function clearText() {
+  document.getElementById('textInput').value = '';
+  document.getElementById('previewImg').style.display = 'none';
+  document.getElementById('ocrMsg').textContent = '';
+  checkReady();
+}
+function openModal() {
+  document.getElementById('modalTextarea').value = document.getElementById('textInput').value;
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('modalTextarea').focus();
+}
+function saveModal() {
+  document.getElementById('textInput').value = document.getElementById('modalTextarea').value;
+  document.getElementById('modal').classList.remove('open');
+  checkReady();
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function openCamera() { var fi = document.getElementById('fileInput'); fi.setAttribute('capture','environment'); fi.value=''; fi.click(); }
+function openGallery() { var fi = document.getElementById('fileInput'); fi.removeAttribute('capture'); fi.value=''; fi.click(); }
+function countLines(t) { return t.split('\n').filter(function(l){ return l.trim().length>0; }).length; }
+function countWords(t) { return t.trim().split(/\s+/).filter(function(w){ return w.length>0; }).length; }
+
+async function handlePhoto(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) { var img = document.getElementById('previewImg'); img.src = e.target.result; img.style.display = 'block'; };
+  reader.readAsDataURL(file);
+  var msg = document.getElementById('ocrMsg');
+  msg.style.color = '#888';
+  msg.textContent = '🔍 Распознаю текст с фото...';
+  try {
+    var fd = new FormData();
+    fd.append('file', file);
+    fd.append('apikey', OCR_KEY);
+    fd.append('language', 'rus');
+    fd.append('isOverlayRequired', 'false');
+    var res = await fetch('https://api.ocr.space/parse/image', { method: 'POST', body: fd });
+    var data = await res.json();
+    if (data.IsErroredOnProcessing) throw new Error(data.ErrorMessage || 'Ошибка OCR');
+    var text = (data.ParsedResults && data.ParsedResults[0]) ? data.ParsedResults[0].ParsedText || '' : '';
+    if (text.trim().length > 5) {
+      document.getElementById('textInput').value = text.trim();
+      msg.style.color = '#4ecca3';
+      msg.textContent = '✅ Текст распознан!';
+      checkReady();
+    } else {
+      msg.style.color = '#f7c948';
+      msg.textContent = '⚠️ Не удалось распознать. Сделай чёткое фото.';
+    }
+  } catch(e) {
+    msg.style.color = '#ff4d6d';
+    msg.textContent = '❌ Ошибка: ' + e.message;
+  }
+}
+
+async function analyze() {
+  var text = document.getElementById('textInput').value.trim();
+  if (!text || !grade) return;
+  var wordCount = countWords(text);
+  var lineCount = countLines(text);
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('errorMsg').style.display = 'none';
+  var msgs = ['Считаю слова...','Ищу рифмы...','Оцениваю сложность...','Ищу источник...'];
+  var idx = 0;
+  var timer = setInterval(function(){ document.getElementById('loadingText').textContent = msgs[idx++ % msgs.length]; }, 900);
+  var gradeLabel = grade === '18' ? 'взрослый (18+)' : 'ученик ' + grade + ' класса';
+  var prompt = 'Ты анализируешь текст для запоминания. Пользователь — ' + gradeLabel + '.\n\n' +
+    'ПРАВИЛА расчёта difficulty:\n' +
+    '- Чем БОЛЬШЕ рифм — тем НИЖЕ difficulty\n' +
+    '- Проза без рифм — difficulty выше чем стихи\n' +
+    '- Короткие простые слова = ниже difficulty\n' +
+    '- Учитывай класс пользователя\n\n' +
+    'ТЕКСТ (' + wordCount + ' слов):\n' + text + '\n\n' +
+    'Верни ТОЛЬКО валидный JSON без markdown:\n' +
+    '{"rhyme":ЧИСЛО_0_100,"rhymeLabel":"МЕТКА","difficulty":ЧИСЛО_0_100,"vocab":ЧИСЛО_0_100,"memory":ЧИСЛО_0_100,"level":"easy_или_medium_или_hard","emoji":"ЭМОДЗИ","title":"ВЕРДИКТ 3-5 СЛОВ","comment":"2-3 честных предложения","tips":["совет1","совет2","совет3"],"source":{"author":"автор или пустая строка","title":"название или пустая строка","book":"сборник или пустая строка","info":"1-2 предложения об этом тексте или пустая строка"}}\n\n' +
+    'rhymeLabel: Нет / Почти нет / Чуть-чуть / Местами / Средне / Хорошая / Отличная';
+
+  try {
+    // Запрос идёт на НАШ сервер /api/ask — ключ там, в коде его нет!
+    var res = await fetch('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'anthropic/claude-3.5-haiku',
+        max_tokens: 1200,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    var data = await res.json();
+    if (!res.ok) throw new Error(data?.error?.message || ('HTTP ' + res.status));
+    var raw = data?.choices?.[0]?.message?.content || '';
+    var match = raw.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('Нет JSON в ответе');
+    var r = JSON.parse(match[0]);
+    r.words = wordCount;
+    r.lines = lineCount;
+    clearInterval(timer);
+    document.getElementById('loading').style.display = 'none';
+    showResults(r, text);
+  } catch(e) {
+    clearInterval(timer);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('analyzeBtn').disabled = false;
+    var errEl = document.getElementById('errorMsg');
+    errEl.textContent = '❌ Ошибка: ' + e.message;
+    errEl.style.display = 'block';
+  }
+}
+
+function barColor(v) { return v < 35 ? 'green' : v < 65 ? 'yellow' : 'red'; }
+function barColorGood(v) { return v >= 65 ? 'green' : v >= 35 ? 'yellow' : 'red'; }
+
+function showResults(r, originalText) {
+  var firstLine = originalText.split('\n')[0].trim().substring(0, 60);
+  var googleUrl = 'https://www.google.com/search?q=' + encodeURIComponent('"' + firstLine + '"');
+  var s = r.source || {};
+  var sourceRows = '';
+  if (s.author) sourceRows += '<div class="source-row"><span class="source-key">Автор</span><span class="source-val">' + s.author + '</span></div>';
+  if (s.title)  sourceRows += '<div class="source-row"><span class="source-key">Название</span><span class="source-val">' + s.title + '</span></div>';
+  if (s.book)   sourceRows += '<div class="source-row"><span class="source-key">Сборник</span><span class="source-val">' + s.book + '</span></div>';
+  var sourceHtml =
+    '<div class="source-box">' +
+    '<div class="stitle">🔍 Источник и автор</div>' +
+    (sourceRows || '<div style="color:#888;font-size:0.82rem;margin-bottom:8px">Произведение не распознано</div>') +
+    (s.info ? '<div style="margin-top:10px;font-size:0.82rem;color:#aaa;line-height:1.5">' + s.info + '</div>' : '') +
+    '<a class="google-btn" href="' + googleUrl + '" target="_blank">🔎 Найти в Google</a>' +
+    '</div>';
+
+  var el = document.getElementById('results');
+  el.innerHTML =
+    '<div class="verdict-box ' + r.level + '">' +
+      '<span class="verdict-emoji">' + r.emoji + '</span>' +
+      '<div class="verdict-title">' + r.title + '</div>' +
+      '<div class="verdict-sub">Сложность учения — ' + r.difficulty + '%</div>' +
+    '</div>' +
+    '<div class="stat-grid">' +
+      '<div class="stat"><div class="stat-icon">📝</div><div class="stat-num">' + r.words + '</div><div class="stat-lbl">слов</div></div>' +
+      '<div class="stat"><div class="stat-icon">📏</div><div class="stat-num">' + r.lines + '</div><div class="stat-lbl">строк</div></div>' +
+      '<div class="stat"><div class="stat-icon">🎵</div><div class="stat-num">' + r.rhyme + '%</div><div class="stat-lbl">рифма — ' + r.rhymeLabel + '</div></div>' +
+      '<div class="stat"><div class="stat-icon">🧠</div><div class="stat-num">' + r.memory + '%</div><div class="stat-lbl">запоминаемость</div></div>' +
+    '</div>' +
+    '<div class="bar-section">' +
+      '<div class="bar-row"><div class="bar-top"><span>Сложность учения</span><span>' + r.difficulty + '%</span></div><div class="bar-bg"><div class="bar-fill ' + barColor(r.difficulty) + '" data-w="' + r.difficulty + '"></div></div></div>' +
+      '<div class="bar-row"><div class="bar-top"><span>Сложность слов</span><span>' + r.vocab + '%</span></div><div class="bar-bg"><div class="bar-fill ' + barColor(r.vocab) + '" data-w="' + r.vocab + '"></div></div></div>' +
+      '<div class="bar-row"><div class="bar-top"><span>Рифмованность</span><span>' + r.rhyme + '%</span></div><div class="bar-bg"><div class="bar-fill green" data-w="' + r.rhyme + '"></div></div></div>' +
+      '<div class="bar-row"><div class="bar-top"><span>Запоминаемость</span><span>' + r.memory + '%</span></div><div class="bar-bg"><div class="bar-fill ' + barColorGood(r.memory) + '" data-w="' + r.memory + '"></div></div></div>' +
+    '</div>' +
+    '<div class="comment-box"><div class="comment-label">🤖 Мнение ИИ-учителя</div>' + r.comment + '</div>' +
+    '<div class="tips-box"><div class="stitle">Советы как учить</div>' + r.tips.map(function(t){ return '<div class="tip">' + t + '</div>'; }).join('') + '</div>' +
+    sourceHtml +
+    '<button id="resetBtn" onclick="resetApp()">↩ Анализировать другой текст</button>';
+
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth' });
+  setTimeout(function(){ document.querySelectorAll('.bar-fill').forEach(function(b){ b.style.width = b.dataset.w + '%'; }); }, 100);
+  document.getElementById('analyzeBtn').disabled = false;
+}
+
+function resetApp() {
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('errorMsg').style.display = 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
